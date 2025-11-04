@@ -1,0 +1,73 @@
+/* style.css */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Microsoft YaHei', sans-serif;
+    overflow: hidden;
+}
+
+#map-container {
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#control-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    min-width: 220px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#control-panel h3 {
+    margin: 0 0 15px 0;
+    color: #1a1a1a;
+    font-size: 16px;
+    text-align: center;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+.legend span {
+    display: block;
+    margin: 8px 0;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.legend .positive {
+    color: #ff4d4f;
+}
+
+.legend .negative {
+    color: #1890ff;
+}
+
+.legend .neutral {
+    color: #52c41a;
+}
+
+.info {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #f0f0f0;
+    font-size: 12px;
+    color: #666;
+}
+
+#update-time {
+    font-weight: bold;
+    color: #1890ff;
+}
