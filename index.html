@@ -3,24 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>实时舆情气象图</title>
-    <link rel="stylesheet" href="style.css">
-    <script type="text/javascript" src="https://api.map.baidu.com/api?v=1.0&type=webgl&ak=VHQjLiBuy6LwHD6UI3jksj4jS8WZlZ5N"></script>
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <title>实时舆情气象图 - 百度地图API大赛作品</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+            background: #1a1a1a;
+        }
+        #map-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: #2d2d2d;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            text-align: center;
+            z-index: 1000;
+        }
+        #control-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            min-width: 250px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 1000;
+        }
+        .debug-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            border-left: 3px solid #1890ff;
+        }
+    </style>
 </head>
 <body>
-    <div id="map-container"></div>
-    <div id="control-panel">
-        <h3>舆情气象图</h3>
-        <div class="legend">
-            <span class="positive">● 积极</span>
-            <span class="negative">● 消极</span>
-            <span class="neutral">● 中性</span>
-        </div>
-        <div class="info">
-            <p>数据更新时间: <span id="update-time"></span></p>
+    <!-- 加载提示 -->
+    <div id="loading">
+        <h2>🌍 实时舆情气象图</h2>
+        <p>正在初始化地图系统...</p>
+        <div id="debug-status" style="margin-top: 10px; font-size: 14px; color: #ffa940;">
+            状态: 等待百度地图API加载
         </div>
     </div>
-    <script src="app.js"></script>
+
+    <!-- 地图容器 -->
+    <div id="map-container"></div>
+
+    <!-- 控制面板 -->
+    <div id="control-panel">
+        <h3>🎯 舆情气象图控制台</h3>
+        <div style="margin: 10px 0;">
+            <span style="color: #ff4d4f;">● 积极情绪</span><br>
+            <span style="color: #1890ff;">● 消极情绪</span><br>
+            <span style="color: #52c41a;">● 中性情绪</span>
+        </div>
+        
+        <div class="debug-info">
+            <strong>调试信息:</strong><br>
+            页面加载: <span id="page-load-status">✅ 完成</span><br>
+            百度地图API: <span id="bmap-status">⏳ 检测中...</span><br>
+            AK状态: <span id="ak-status">⏳ 检测中...</span><br>
+            最后更新: <span id="update-time">--:--:--</span>
+        </div>
+    </div>
+
+    <!-- 替换 YOUR_ACTUAL_AK 为你的真实百度地图AK -->
+    <script type="text/javascript" src="https://api.map.baidu.com/api?v=1.0&type=webgl&ak=VHQjLiBuy6LwHD6UI3jksj4jS8WZlZ5N"></script>
+    
+    <script>
+        // 调试日志
+        console.log('🔧 开始初始化舆情地图项目...');
+        
+        let debugStatus = document.getElementById('debug-status');
+        let bmapStatus = document.getElementById('bmap-status');
+        let akStatus = document.getElementById('ak-status');
+        let loadingElement = document.getElementById('loading');
+
+        // 更新状态函数
+        function updateStatus(element, message, type = 'info') {
+            const colors = {
+                success: '#52c41a',
+                error: '#ff4d4f', 
+                warning: '#faad14',
+                info: '#1890ff'
+            };
+            
+            element.innerHTML = message;
+            element.style.color = colors[type] || colors.info;
+            console.log(`状态更新 [${type}]:`, message);
+        }
+
+        // 检查百度地图API加载状态
+        function checkBMapStatus() {
+            if (typeof BMap !== 'undefined') {
+                updateStatus(bmapStatus, '✅ 加载成功', 'success');
+                updateStatus(akStatus, '✅ AK有效', 'success');
+                return true;
+            } else {
+                updateStatus(bmapStatus, '❌ 加载失败', 'error');
+                updateStatus(akStatus, '❌ AK可能无效', 'error');
+                return false;
+            }
+        }
+
+        // 初始化地图
+        function initMap() {
+            console.log('🗺️ 开始初始化地图...');
+            updateStatus(debugStatus, '正在创建地图实例...', 'info');
+            
+            try {
+                // 创建地图实例
+                const map = new BMap.Map('map-container');
+                console.log('✅ 地图实例创建成功');
+                
+                // 设置地图中心点（中国中心）
+                const point = new BMap.Point(104.0, 35.0);
+                map.centerAndZoom(point, 5);
+                console.log('✅ 地图中心点设置成功');
+                
+                // 启用交互
+                map.enableScrollWheelZoom(true);
+                map.enableDragging();
+                console.log('✅ 地图交互功能启用');
+                
+                // 添加导航控件
+                map.addControl(new BMap.NavigationControl());
+                console.log('✅ 导航控件添加成功');
+                
+                // 隐藏加载提示
+                loadingElement.style.display = 'none';
+                updateStatus(debugStatus, '✅ 地图初始化完成！', 'success');
+                
+                // 添加测试标记
+                addTestMarkers(map);
+                
+            } catch (error) {
+                console.error('地图初始化错误:', error);
+                updateStatus(debugStatus, `❌ 地图初始化失败: ${error.message}`, 'error');
+                
+                // 显示详细错误信息
+                loadingElement.innerHTML = `
+                    <h2>❌ 地图加载失败</h2>
+                    <p>错误信息: ${error.message}</p>
+                    <p style="font-size: 14px; margin-top: 10px;">
+                        请检查：<br>
+                        1. 百度地图AK是否正确<br>
+                        2. 白名单是否包含: aaa-yz.github.io<br>
+                        3. AK是否通过审核
+                    </p>
+                `;
+            }
+        }
+
+        // 添加测试标记
+        function addTestMarkers(map) {
+            const cities = [
+                { name: '北京', lng: 116.404, lat: 39.915 },
+                { name: '上海', lng: 121.475, lat: 31.235 },
+                { name: '广州', lng: 113.264, lat: 23.129 },
+                { name: '深圳', lng: 114.057, lat: 22.543 }
+            ];
+            
+            cities.forEach(city => {
+                const point = new BMap.Point(city.lng, city.lat);
+                const marker = new BMap.Marker(point);
+                map.addOverlay(marker);
+                
+                // 添加信息窗口
+                const infoWindow = new BMap.InfoWindow(`
+                    <div style="min-width: 200px;">
+                        <h4>${city.name}</h4>
+                        <p>📊 模拟舆情数据</p>
+                        <p>😊 积极: 65%</p>
+                        <p>😐 中性: 20%</p>
+                        <p>😞 消极: 15%</p>
+                    </div>
+                `);
+                
+                marker.addEventListener('click', function() {
+                    this.openInfoWindow(infoWindow);
+                });
+            });
+            
+            console.log('✅ 测试标记添加完成');
+        }
+
+        // 更新时间显示
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('update-time').textContent = now.toLocaleTimeString();
+        }
+
+        // 页面加载完成后的初始化
+        window.onload = function() {
+            console.log('📄 页面加载完成');
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // 检查百度地图API状态
+            const checkInterval = setInterval(() => {
+                if (checkBMapStatus()) {
+                    clearInterval(checkInterval);
+                    // API加载成功，初始化地图
+                    setTimeout(initMap, 500);
+                }
+            }, 1000);
+            
+            // 10秒后如果还没加载成功，显示错误
+            setTimeout(() => {
+                if (typeof BMap === 'undefined') {
+                    updateStatus(debugStatus, '❌ 百度地图API加载超时，请检查网络和AK配置', 'error');
+                    clearInterval(checkInterval);
+                }
+            }, 10000);
+        };
+
+        // 全局错误捕获
+        window.addEventListener('error', function(e) {
+            console.error('全局错误:', e.error);
+            updateStatus(debugStatus, `❌ 页面错误: ${e.message}`, 'error');
+        });
+    </script>
 </body>
 </html>
