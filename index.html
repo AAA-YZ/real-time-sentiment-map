@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时舆情气象图</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="text/javascript" src="https://api.map.baidu.com/api?v=1.0&type=webgl&ak=VHQjLiBuy6LwHD6UI3jksj4jS8WZlZ5N"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+<body>
+    <div id="map-container"></div>
+    <div id="control-panel">
+        <h3>舆情气象图</h3>
+        <div class="legend">
+            <span class="positive">● 积极</span>
+            <span class="negative">● 消极</span>
+            <span class="neutral">● 中性</span>
+        </div>
+        <div class="info">
+            <p>数据更新时间: <span id="update-time"></span></p>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
